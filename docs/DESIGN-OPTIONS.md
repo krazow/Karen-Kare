@@ -96,3 +96,9 @@ Exact internal tooling isn't always public; this is what's verifiable.
 ### Platform architecture (all options)
 - PWA (offline-first, service worker, encrypted IndexedDB queue) → later **Capacitor** wrap for App Store/Play Store and **Tauri/Electron** for the Windows installer from the same codebase.
 - Backend must be HIPAA-eligible with a signed BAA (e.g., Supabase HIPAA add-on, AWS, or Azure). No PHI on any non-BAA service (including analytics, email, push).
+
+## 4. Decisions (2026-11-18)
+- **Scope:** Option B — Aide App + RN/Agency Portal.
+- **UX:** Hybrid — Big Button for aides, dashboard for RN/office.
+- **Program:** Florida Medicaid (SMMC LTC + fee-for-service); EVV via HHAeXchange open model. Services: T1019 personal care, S5130 homemaker, S5135 companion, S5150 respite (confirm codes against AHCA fee schedule).
+- **Backend:** deferred — v0.1 runs fully on-device with mock data (IndexedDB).
