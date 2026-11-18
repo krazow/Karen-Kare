@@ -100,5 +100,11 @@ Exact internal tooling isn't always public; this is what's verifiable.
 ## 4. Decisions (2026-11-18)
 - **Scope:** Option B — Aide App + RN/Agency Portal.
 - **UX:** Hybrid — Big Button for aides, dashboard for RN/office.
-- **Program:** Florida Medicaid (SMMC LTC + fee-for-service); EVV via HHAeXchange open model. Services: T1019 personal care, S5130 homemaker, S5135 companion, S5150 respite (confirm codes against AHCA fee schedule).
+- **Program:** Florida Medicaid (SMMC LTC + fee-for-service); EVV via HHAeXchange open model. Services: T1019 personal care, S5130 homemaker, S5135 adult companion, S5125 attendant care (verified against AHCA SMMC LTC code table and plan billing guides).
 - **Backend:** deferred — v0.1 runs fully on-device with mock data (IndexedDB).
+
+## 5. v0.2 (2026-11-18)
+- EVV export rebuilt to HHAeXchange's published Homecare V5 visit import layout (96 columns, `YYYY-MM-DD HH:MM` local times, call types Mobile/Manual, missed-visit and visit-edit codes). Payer IDs and reason/action codes are entered in Settings once HHAeXchange provides the EDI Code Table Guide.
+- On-device encryption (AES-GCM-256, per-user PIN-wrapped key), PINs no longer stored, background auto-lock.
+- Aide UI in English, Spanish, Haitian Creole.
+- GitHub Pages must be turned on manually (Settings → Pages → Deploy from branch → main / root).

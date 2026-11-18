@@ -26,7 +26,7 @@ export function evvElements(v, client, aide) {
     ['Type of service', !!v.serviceCode && SERVICES[v.serviceCode]?.label],
     ['Individual receiving service', client && `${client.name} (${client.medicaidId})`],
     ['Date of service', v.date],
-    ['Location of service', v.clockIn && `${v.clockIn.lat?.toFixed?.(5) ?? '—'}, ${v.clockIn.lng?.toFixed?.(5) ?? '—'} (${v.clockIn.method})`],
+    ['Location of service', v.clockIn && client && `${client.address.line1}, ${client.address.city} · ${v.clockIn.method === 'gps' ? `GPS ${v.clockIn.lat.toFixed(5)}, ${v.clockIn.lng.toFixed(5)}` : 'manual'}`],
     ['Individual providing service', aide && `${aide.name} (${aide.employeeId})`],
     ['Begin / end time', v.clockIn && v.clockOut && `${fmtTime(v.clockIn.time)} – ${fmtTime(v.clockOut.time)}`],
   ];
