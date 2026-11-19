@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-11-18)
+
+First release.
 
 ### Added
 - Aide app (big buttons): today's visits, GPS clock-in/out with a check against the client's address, care-plan task checklist, change-in-condition alert to the nurse, visit note, client signature, attestation, and a 6/6 Medicaid EVV check on every visit.
@@ -10,3 +12,6 @@
 - English, Spanish and Haitian Creole for aides.
 - Works offline; all data encrypted on the device and unlocked by the user's PIN; automatic lock after 5 minutes.
 - Release kit: `/release now` builds, tests and publishes the web app, Android APK and Windows installer (beta, then production).
+
+### Fixed
+- The aide's "today" list uses the phone's local date, so evening visits no longer jump to the next day.
