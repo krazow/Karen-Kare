@@ -26,6 +26,7 @@ function resetLock() {
 async function lock(msg) {
   if (me && db.isUnlocked()) await db.audit(me.id, 'logout', msg || 'manual');
   me = null; db.lock(); clearTimeout(lockTimer);
+  const tEl = $('#toast'); tEl.hidden = true; clearTimeout(tEl._h); // don't carry messages into the next user's session
   location.hash = '#/login'; if (msg) toast(msg);
 }
 // Lock when the app is hidden longer than the timeout (phone pocketed, tab switched)
@@ -117,7 +118,7 @@ async function viewLogin() {
       return toast(wait ? t('Too many wrong PINs. Try again in {n} min.', { n: Math.ceil(wait / 60000) }) : t('Wrong PIN'));
     }
     me = await db.get('users', f.get('u'));
-    if (me.role === 'aide' && me.lang) setLang(me.lang);
+    setLang(me.role === 'aide' && me.lang ? me.lang : 'en'); // RN portal is English; aides get their own language
     await db.audit(me.id, 'login'); resetLock();
     location.hash = me.role === 'rn' ? '#/rn' : '#/aide';
   };
@@ -296,7 +297,7 @@ function showAbuseHotline() {
     <a class="btn alert xl" href="tel:18009622873">📞 1-800-96-ABUSE (1-800-962-2873)</a>
     <a class="btn ghost xl" href="https://reportabuse.myflfamilies.com/" target="_blank" rel="noopener noreferrer">${t('Report online')}</a>
     <p class="muted">TTY 1-800-955-8771 · Florida Relay 711 · ${t('Call 911 if the person is in immediate danger.')}</p>
-    <div class="row"><span></span><button value="ok" class="btn primary">${t('Done')}</button></div></form>`;
+    <div class="row"><span></span><button value="ok" class="btn primary">${t('Close')}</button></div></form>`;
   d.onclose = () => db.audit(me.id, 'abuse-hotline-shown');
   d.showModal();
 }
