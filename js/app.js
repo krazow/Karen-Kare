@@ -27,6 +27,7 @@ async function lock(msg) {
   if (me && db.isUnlocked()) await db.audit(me.id, 'logout', msg || 'manual');
   me = null; db.lock(); clearTimeout(lockTimer);
   const tEl = $('#toast'); tEl.hidden = true; clearTimeout(tEl._h); // don't carry messages into the next user's session
+  setLang('en'); // the next person starts on English and picks their own language
   location.hash = '#/login'; if (msg) toast(msg);
 }
 // Lock when the app is hidden longer than the timeout (phone pocketed, tab switched)
