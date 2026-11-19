@@ -42,7 +42,7 @@ Demo PINs: Maria (aide) `1111` · Jean-Pierre (aide) `2222` · Karen RN `9999`.
 - Audit log of every action
 
 ## Regulatory map
-See [docs/DESIGN-OPTIONS.md](docs/DESIGN-OPTIONS.md) — Cures Act §12006, 42 CFR 484.80, HIPAA, F.S. 409.9132, Rule 59G-4.132, Rule 59A-8.
+See [docs/COMPLIANCE-GAPS.md](docs/COMPLIANCE-GAPS.md) for the legal/HIPAA gap analysis and [docs/DESIGN-OPTIONS.md](docs/DESIGN-OPTIONS.md) — Cures Act §12006, 42 CFR 484.80, HIPAA, F.S. 409.9132, Rule 59G-4.132, Rule 59A-8.
 
 ## Security
 All records are AES-GCM-256 encrypted in IndexedDB. The data key is wrapped per user with a PBKDF2-SHA256 (310k iterations) key derived from their PIN; PINs are never stored, and locking drops the key from memory. Failed sign-ins are logged to the audit trail.

@@ -4,6 +4,12 @@
 export const LANGS = { en: 'English', es: 'Español', ht: 'Kreyòl' };
 
 const es = {
+  'Authorized users only. This app holds confidential health information protected by HIPAA and Florida law. All activity is logged.': 'Solo usuarios autorizados. Esta aplicación contiene información de salud confidencial protegida por HIPAA y la ley de Florida. Toda actividad queda registrada.',
+  'Too many wrong PINs. Try again in {n} min.': 'Demasiados PIN incorrectos. Intente de nuevo en {n} min.',
+  'Suspected abuse, neglect or exploitation': 'Sospecha de abuso, negligencia o explotación',
+  'Report to the Florida Abuse Hotline now': 'Reporte ahora a la Línea de Abuso de Florida',
+  'Florida law requires you to report suspected abuse, neglect or exploitation yourself, right away. Telling the nurse is not enough.': 'La ley de Florida le exige reportar usted mismo, de inmediato, cualquier sospecha de abuso, negligencia o explotación. Avisar a la enfermera no es suficiente.',
+  'Close': 'Cerrar', 'Report online': 'Reportar en línea', 'Call 911 if the person is in immediate danger.': 'Llame al 911 si la persona está en peligro inmediato.',
   'My Day': 'Mi día', 'Hi': 'Hola', "Today's visits": 'Visitas de hoy', 'No visits scheduled today.': 'No hay visitas programadas hoy.',
   'My credentials': 'Mis credenciales', 'Tell your supervisor.': 'Avise a su supervisor.', 'EXPIRED': 'VENCIDO', 'expires in {n} days': 'vence en {n} días',
   'Scheduled': 'Programada', 'In progress': 'En curso', 'Done': 'Terminada', 'Late': 'Tarde', 'Missed': 'Perdida', 'to': 'a',
@@ -51,6 +57,12 @@ const es = {
 };
 
 const ht = {
+  'Authorized users only. This app holds confidential health information protected by HIPAA and Florida law. All activity is logged.': 'Se sèlman moun ki gen otorizasyon. Aplikasyon sa a gen enfòmasyon sante konfidansyèl ke HIPAA ak lalwa Florid pwoteje. Tout aktivite anrejistre.',
+  'Too many wrong PINs. Try again in {n} min.': 'Twòp PIN ki pa bon. Eseye ankò nan {n} minit.',
+  'Suspected abuse, neglect or exploitation': 'Sispèk abi, neglijans oswa eksplwatasyon',
+  'Report to the Florida Abuse Hotline now': 'Rapòte bay Liy Abi Florid la kounye a',
+  'Florida law requires you to report suspected abuse, neglect or exploitation yourself, right away. Telling the nurse is not enough.': 'Lalwa Florid mande pou ou menm rapòte touswit nenpòt sispèk abi, neglijans oswa eksplwatasyon. Di enfimyè a sèlman pa ase.',
+  'Close': 'Fèmen', 'Report online': 'Rapòte sou entènèt', 'Call 911 if the person is in immediate danger.': 'Rele 911 si moun nan an danje touswit.',
   'My Day': 'Jounen mwen', 'Hi': 'Bonjou', "Today's visits": 'Vizit jodi a', 'No visits scheduled today.': 'Pa gen vizit pwograme jodi a.',
   'My credentials': 'Sètifika mwen yo', 'Tell your supervisor.': 'Di sipèvizè w la.', 'EXPIRED': 'EKSPIRE', 'expires in {n} days': 'ap ekspire nan {n} jou',
   'Scheduled': 'Pwograme', 'In progress': 'Ap fèt', 'Done': 'Fini', 'Late': 'An reta', 'Missed': 'Rate', 'to': 'jiska',

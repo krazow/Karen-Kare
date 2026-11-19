@@ -75,7 +75,27 @@ export const metaPut = obj => raw('meta', 'readwrite', s => s.put(obj));
 
 export async function directory() { return (await metaGet('directory'))?.users || []; }
 
+// Account lockout (HIPAA 164.308(a)(5)(ii)(C) log-in monitoring): after 5 wrong PINs the
+// account waits 5 minutes, doubling with each further failure (max 24 h).
+const MAX_TRIES = 5;
+export async function lockoutRemaining(userId) {
+  const l = (await metaGet('lockout'))?.users?.[userId];
+  return l?.until ? Math.max(0, new Date(l.until) - Date.now()) : 0;
+}
+async function noteFailure(userId, ok) {
+  const rec = (await metaGet('lockout')) || { id: 'lockout', users: {} };
+  if (ok) delete rec.users[userId];
+  else {
+    const u = rec.users[userId] || { fails: 0 };
+    u.fails++;
+    if (u.fails >= MAX_TRIES) u.until = new Date(Date.now() + Math.min(5 * 60000 * 2 ** (u.fails - MAX_TRIES), 864e5)).toISOString();
+    rec.users[userId] = u;
+  }
+  await metaPut(rec);
+}
+
 export async function unlock(userId, pin) {
+  if (await lockoutRemaining(userId)) return false;
   const k = (await metaGet('keys'))?.wrapped?.[userId];
   if (!k) return false;
   try {
@@ -85,8 +105,10 @@ export async function unlock(userId, pin) {
   if (!dataKey) {
     const f = (await metaGet('failedLogins')) || { id: 'failedLogins', list: [] };
     f.list.push({ userId, time: new Date().toISOString() }); await metaPut(f);
+    await noteFailure(userId, false);
     return false;
   }
+  await noteFailure(userId, true);
   const f = await metaGet('failedLogins');
   if (f?.list.length) { for (const x of f.list) await audit(x.userId, 'login-failed', '', x.time); await metaPut({ id: 'failedLogins', list: [] }); }
   return true;
@@ -107,7 +129,30 @@ export async function ensureSeeded(force = false) {
   dataKey = null;
 }
 
-// Append-only audit trail (HIPAA 164.312(b) audit controls).
-export async function audit(userId, action, detail = '', time = new Date().toISOString()) {
-  await put('audit', { id: uid('a_'), time, userId, action, detail });
+// Append-only, hash-chained audit trail (HIPAA 164.312(b) audit controls, 164.312(c) integrity).
+// Each entry stores the SHA-256 of the previous one, so a deleted or edited entry breaks the chain.
+const sha256 = async s => b64(await crypto.subtle.digest('SHA-256', enc.encode(s)));
+const entryHash = e => sha256(JSON.stringify([e.seq, e.prev, e.time, e.userId, e.action, e.detail]));
+let auditQueue = Promise.resolve();
+export function audit(userId, action, detail = '', time = new Date().toISOString()) {
+  auditQueue = auditQueue.then(async () => {
+    const head = (await metaGet('auditHead')) || { id: 'auditHead', seq: 0, hash: 'GENESIS' };
+    const e = { id: uid('a_'), seq: head.seq + 1, prev: head.hash, time, userId, action, detail };
+    e.hash = await entryHash(e);
+    await put('audit', e);
+    await metaPut({ id: 'auditHead', seq: e.seq, hash: e.hash });
+  });
+  return auditQueue;
+}
+export async function verifyAudit() {
+  const log = (await all('audit')).sort((a, b) => a.seq - b.seq);
+  const head = await metaGet('auditHead');
+  let prev = 'GENESIS';
+  for (let i = 0; i < log.length; i++) {
+    const e = log[i];
+    if (e.seq !== i + 1 || e.prev !== prev || e.hash !== await entryHash(e)) return { ok: false, at: i + 1, total: log.length };
+    prev = e.hash;
+  }
+  if ((head?.hash || 'GENESIS') !== prev) return { ok: false, at: log.length + 1, total: log.length };
+  return { ok: true, total: log.length };
 }

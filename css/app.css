@@ -79,3 +79,6 @@ dialog::backdrop { background: #0b254088; }
 .lang { border: 2px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 600; color: var(--navy); cursor: pointer; }
 .lang.on { border-color: var(--teal); background: var(--teal-l); }
 h4 { margin: 8px 0 0; }
+:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+.notice { font-size: .85rem; color: var(--muted); border-left: 4px solid var(--teal); padding: 6px 10px; margin: 12px 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

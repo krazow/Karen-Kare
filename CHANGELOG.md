@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Account locks for a while after 5 wrong PINs.
+- Tamper-evident audit trail: the Audit tab shows whether any entry was changed or deleted.
+- "Suspected abuse, neglect or exploitation" report that tells the aide to call the Florida Abuse Hotline (required by Florida law).
+- Monthly exclusion-list check tracked for each aide, with a "check done today" button.
+- Dementia (ADRD) training tracked for each aide.
+- Confidentiality notice on the sign-in screen and a warning before downloading the EVV file.
+- Legal and HIPAA gap analysis (docs/COMPLIANCE-GAPS.md).
+
+### Changed
+- Aides now see only the last 4 digits of a client's Medicaid ID.
+- Removed the HIV/AIDS course for regular aides (Florida only requires it for the medically-fragile-children aide program).
+- Accessibility: the app can rotate, keyboard focus is visible, and screen readers get labels for the PIN and signature.
+
 ## 0.2.0 (2026-11-18)
 
 First release.
