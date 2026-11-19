@@ -1,5 +1,5 @@
 import * as db from './db.js';
-import { SERVICES, TASK_LIBRARY, fullAddress } from './data.js';
+import { SERVICES, TASK_LIBRARY, fullAddress, DEMO } from './data.js';
 import * as rules from './compliance.js';
 import { buildV5, toCsv, download } from './evv.js';
 import { t, setLang, getLang, LANGS } from './i18n.js';
@@ -12,6 +12,7 @@ const today = () => localDate();
 const svc = code => t(SERVICES[code]?.label || code);
 const APP_VERSION = '0.2.0'; // stamped by the release kit
 const AUTO_LOCK_MS = 5 * 60 * 1000; // HIPAA 164.312(a)(2)(iii) automatic logoff
+const ABUSE = 'Suspected abuse, neglect or exploitation';
 const MISSED_REASONS = ['Client not home', 'Client refused service', 'Client hospitalized', 'Caregiver unavailable / call-out', 'Emergency evacuation', 'Other'];
 
 let me = null, lockTimer;
@@ -100,23 +101,27 @@ async function viewLogin() {
       <form id="lf">
         <div class="user-pick">${users.map((u, i) => `<label class="big-choice"><input type="radio" name="u" value="${u.id}" ${i ? '' : 'checked'}>
           <span><b>${esc(u.name)}</b><br><small>${u.role === 'rn' ? t('RN Supervisor') : t('Home Care Aide')}</small></span></label>`).join('')}</div>
-        <input name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN" class="pin" required>
+        <input name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN" aria-label="PIN" class="pin" required>
         <button class="btn primary xl" id="signin">${t('Sign in')}</button>
       </form>
-      <p class="demo">Demo PINs — Maria 1111 · Jean-Pierre 2222 · Karen RN 9999<br>
-      <button class="link" id="reset">Reset demo data</button><br><span class="ver">v${APP_VERSION}</span></p>
+      <p class="notice">${t('Authorized users only. This app holds confidential health information protected by HIPAA and Florida law. All activity is logged.')}</p>
+      <p class="demo">${DEMO ? `Demo PINs — Maria 1111 · Jean-Pierre 2222 · Karen RN 9999<br><button class="link" id="reset">Reset demo data</button><br>` : ''}<span class="ver">v${APP_VERSION}</span></p>
     </section>`, { title: 'Karen Kare', langs: true });
   $('#lf').onsubmit = async e => {
     e.preventDefault();
     const f = new FormData(e.target), btn = $('#signin');
     btn.disabled = true; btn.textContent = t('Unlocking…');
-    if (!(await db.unlock(f.get('u'), f.get('pin')))) { btn.disabled = false; btn.textContent = t('Sign in'); e.target.pin.value = ''; return toast(t('Wrong PIN')); }
+    if (!(await db.unlock(f.get('u'), f.get('pin')))) {
+      btn.disabled = false; btn.textContent = t('Sign in'); e.target.pin.value = '';
+      const wait = await db.lockoutRemaining(f.get('u'));
+      return toast(wait ? t('Too many wrong PINs. Try again in {n} min.', { n: Math.ceil(wait / 60000) }) : t('Wrong PIN'));
+    }
     me = await db.get('users', f.get('u'));
     if (me.role === 'aide' && me.lang) setLang(me.lang);
     await db.audit(me.id, 'login'); resetLock();
     location.hash = me.role === 'rn' ? '#/rn' : '#/aide';
   };
-  $('#reset').onclick = async () => { await db.ensureSeeded(true); toast('Demo data reset'); viewLogin(); };
+  if (DEMO) $('#reset').onclick = async () => { await db.ensureSeeded(true); toast('Demo data reset'); viewLogin(); };
 }
 
 // ---------- AIDE ----------
@@ -209,7 +214,7 @@ async function viewVisit(id) {
       <h3>${t('Visit note')}</h3>
       <textarea id="note" rows="4" placeholder="${esc(t('What happened during the visit? Anything the nurse should know?'))}">${esc(v.note || '')}</textarea>
       <h3>${t('Client signature')}</h3>
-      <canvas id="sig" width="600" height="180" class="sig"></canvas>
+      <canvas id="sig" width="600" height="180" class="sig" role="img" aria-label="${esc(t('Client signature'))}"></canvas>
       <div class="row"><button class="btn ghost sm" id="sigClear">${t('Clear')}</button>
         <label class="chk"><input type="checkbox" id="noSign"> ${t('Client unable to sign')}</label></div>
       <label class="chk attest"><input type="checkbox" id="attest"> ${t('I attest the services above were provided as documented.')}</label>
@@ -251,7 +256,8 @@ async function viewVisit(id) {
     return shell(header + `<div class="banner warn">${t('Missed')}: ${esc(t(v.missedReason || ''))}</div>`, { title: t('Visit record'), back });
   }
 
-  const els = rules.evvElements(v, c, aide);
+  // Minimum necessary (45 CFR 164.502(b)): aides see only the last 4 digits of the Medicaid ID.
+  const els = rules.evvElements(v, c, aide).map(([k, val]) => [k, me.role === 'aide' && val && k === 'Individual receiving service' ? val.replace(c.medicaidId, '••••' + c.medicaidId.slice(-4)) : val]);
   shell(header + `
     <section class="card"><h3>${t('EVV record')} ${rules.evvComplete(v, c, aide) ? `<span class="pill ok">${t('6/6 complete')}</span>` : `<span class="pill bad">${t('incomplete')}</span>`}</h3>
       <table class="tbl">${els.map(([k, val]) => `<tr><td>${esc(k)}</td><td>${val ? esc(val) : `<span class="pill bad">${t('missing')}</span>`}</td></tr>`).join('')}
@@ -265,7 +271,7 @@ async function viewVisit(id) {
 
 async function reportCondition(v, c) {
   const d = $('#dialog');
-  const kinds = ['Fall', 'New pain', 'Skin / wound change', 'Breathing problem', 'Confusion / behavior change', 'Not eating / drinking', 'Medication concern', 'Other'];
+  const kinds = ['Fall', 'New pain', 'Skin / wound change', 'Breathing problem', 'Confusion / behavior change', 'Not eating / drinking', 'Medication concern', 'Other', ABUSE];
   d.innerHTML = `<form method="dialog"><h2>${t('Change in condition')}</h2>
     <p class="muted">${t('Your supervising nurse is alerted right away. Call 911 for emergencies.')}</p>
     <div class="reason-list">${kinds.map((r, i) => `<label class="big-choice"><input type="radio" name="k" value="${r}" ${i ? '' : 'checked'}> ${esc(t(r))}</label>`).join('')}</div>
@@ -276,7 +282,22 @@ async function reportCondition(v, c) {
     const f = new FormData($('form', d));
     await db.put('alerts', { id: db.uid('al_'), visitId: v.id, clientId: c.id, aideId: me.id, kind: f.get('k'), text: f.get('t'), time: new Date().toISOString(), ack: null });
     await db.audit(me.id, 'condition-report', `${c.id} ${f.get('k')}`); toast(t('Nurse alerted'));
+    if (f.get('k') === ABUSE) showAbuseHotline();
   };
+  d.showModal();
+}
+
+// F.S. 415.1034: anyone who suspects abuse, neglect or exploitation of a vulnerable adult must
+// report it immediately to the Florida Abuse Hotline themselves. Telling the agency is not enough.
+function showAbuseHotline() {
+  const d = $('#dialog');
+  d.innerHTML = `<form method="dialog"><h2>${t('Report to the Florida Abuse Hotline now')}</h2>
+    <p>${t('Florida law requires you to report suspected abuse, neglect or exploitation yourself, right away. Telling the nurse is not enough.')}</p>
+    <a class="btn alert xl" href="tel:18009622873">📞 1-800-96-ABUSE (1-800-962-2873)</a>
+    <a class="btn ghost xl" href="https://reportabuse.myflfamilies.com/" target="_blank" rel="noopener noreferrer">${t('Report online')}</a>
+    <p class="muted">TTY 1-800-955-8771 · Florida Relay 711 · ${t('Call 911 if the person is in immediate danger.')}</p>
+    <div class="row"><span></span><button value="ok" class="btn primary">${t('Done')}</button></div></form>`;
+  d.onclose = () => db.audit(me.id, 'abuse-hotline-shown');
   d.showModal();
 }
 
@@ -417,9 +438,17 @@ async function viewRnAides() {
       <label>License / certificate #<input name="licenseNumber" value="${esc(u.licenseNumber || '')}"></label>
       <label>SSN last 5 (HHAeXchange)<input name="ssnLast5" value="${esc(u.ssnLast5 || '')}" inputmode="numeric" maxlength="5" pattern="\\d{5}" autocomplete="off"></label>
       <label>Gender<select name="gender">${['F', 'M', 'U'].map(g => `<option ${u.gender === g ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
-      <button class="btn ghost">Save</button></form>
+      <button class="btn ghost">Save</button>
+      <button type="button" class="btn ghost" data-excl="${u.id}">Exclusion check done today</button></form>
     <table class="tbl">${u.credentials.map(c => { const s = rules.credentialStatus(c); return `<tr><td>${esc(c.type)}</td><td>${c.expires ? rules.fmtDate(c.expires) : 'No expiry'}</td>
       <td><span class="pill ${s.state === 'ok' ? 'ok' : s.state === 'expired' ? 'bad' : 'warn'}">${s.state === 'expired' ? 'Expired' : s.state === 'ok' ? 'Current' : `${s.left}d left`}</span></td></tr>`; }).join('')}</table></section>`).join(''), 'Aides');
+  // 42 CFR 1001.1901 / 455.436: no payment for services by excluded individuals; check OIG LEIE + AHCA lists monthly.
+  document.querySelectorAll('[data-excl]').forEach(b => (b.onclick = async () => {
+    const u = await db.get('users', b.dataset.excl), d = new Date(), exp = new Date(d.getTime() + 30 * 864e5);
+    const type = 'OIG LEIE + AHCA exclusion check (monthly)';
+    u.credentials = (u.credentials || []).filter(c => c.type !== type).concat({ type, issued: localDate(d), expires: localDate(exp) });
+    await db.put('users', u); await db.audit(me.id, 'exclusion-check', u.id); toast('Exclusion check recorded'); viewRnAides();
+  }));
   document.querySelectorAll('.aide-form').forEach(f => (f.onsubmit = async e => {
     e.preventDefault(); const u = await db.get('users', f.dataset.id);
     Object.assign(u, Object.fromEntries(new FormData(f))); await db.put('users', u); await db.audit(me.id, 'aide-update', u.id); toast('Saved');
@@ -467,6 +496,8 @@ async function viewRnEvv() {
     $('#ex').onsubmit = async e => {
       e.preventDefault(); const f = e.target;
       if (e.submitter?.value !== 'dl') return render(f.f.value, f.t.value);
+      if (!confirm('This file contains protected health information (names, Medicaid IDs, diagnoses, GPS locations).\n\n' +
+        'Only save it on an encrypted, agency-managed computer, upload it through your HHAeXchange SFTP account, then delete it.\n\nDownload now?')) return;
       const r = buildV5(visits.filter(v => v.date >= f.f.value && v.date <= f.t.value), clients, users, settings);
       download(`HHAX_V5_${settings.taxId || 'AGENCY'}_${f.f.value}_${f.t.value}.csv`, toCsv(r.rows, settings.header !== false));
       await db.audit(me.id, 'evv-export', `${f.f.value}..${f.t.value} rows=${r.rows.length}`);
@@ -476,11 +507,12 @@ async function viewRnEvv() {
 }
 
 async function viewRnAudit() {
-  const [log, users] = await Promise.all([db.all('audit'), db.all('users')]);
+  const [log, users, chain] = await Promise.all([db.all('audit'), db.all('users'), db.verifyAudit()]);
   const um = Object.fromEntries(users.map(u => [u.id, u]));
-  log.sort((a, b) => b.time.localeCompare(a.time));
-  rnShell(`<section class="card"><table class="tbl"><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr>
-    ${log.slice(0, 300).map(a => `<tr><td>${new Date(a.time).toLocaleString()}</td><td>${esc(um[a.userId]?.name || a.userId)}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`).join('')}</table></section>`, 'Audit Log');
+  log.sort((a, b) => b.seq - a.seq);
+  rnShell(`<div class="banner ${chain.ok ? 'info' : 'warn'}">${chain.ok ? `Audit trail intact — ${chain.total} entries, hash chain verified.` : `⚠️ Audit trail has been altered at entry #${chain.at}. Report this to your security officer.`}</div>
+    <section class="card"><table class="tbl"><tr><th>#</th><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr>
+    ${log.slice(0, 300).map(a => `<tr><td>${a.seq}</td><td>${new Date(a.time).toLocaleString()}</td><td>${esc(um[a.userId]?.name || a.userId)}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`).join('')}</table></section>`, 'Audit Log');
 }
 
 // ---------- router ----------

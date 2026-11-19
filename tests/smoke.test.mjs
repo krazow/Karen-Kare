@@ -28,6 +28,8 @@ const context = await browser.newContext({ viewport: { width: 390, height: 844 }
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push(String(e)));
+const dialogs = [];
+page.on('dialog', d => { dialogs.push(d.message()); d.accept(); }); // the PHI warning before export
 let failed = 0;
 async function check(name, fn) {
   try { await fn(); console.log('ok   ' + name); } catch (e) { failed++; console.log('FAIL ' + name + ': ' + e.message); }
@@ -73,6 +75,9 @@ const CHECKS = [
     const n = await page.locator('.task').count();
     for (let i = 0; i < n; i++) { await page.locator('.task').nth(i).locator('[data-a=done]').click(); await page.waitForTimeout(100); }
     await page.click('#cond'); await page.fill('#dialog textarea', 'Red area on left heel'); await page.click('#dialog button[value=ok]');
+    // reporting suspected abuse must point the aide to the Florida Abuse Hotline (F.S. 415.1034)
+    await page.click('#cond'); await page.locator('#dialog input[name=k]').last().check(); await page.click('#dialog button[value=ok]');
+    await page.waitForSelector('#dialog a[href="tel:18009622873"]'); await page.click('#dialog button[value=ok]');
     await page.fill('#note', 'Smoke test visit');
     await page.check('#noSign'); await page.check('#attest'); await page.click('#cout');
     await page.click('#dialog button[value=ok]'); // reason client could not sign
@@ -99,6 +104,17 @@ const CHECKS = [
     let cols = 1, q = false;
     for (const ch of lines[1]) { if (ch === '"') q = !q; else if (ch === ',' && !q) cols++; }
     if (cols !== 96) throw new Error(`expected 96 columns, got ${cols}`);
+    if (!dialogs.some(m => m.includes('protected health information'))) throw new Error('no PHI warning before export');
+  }],
+  ['the audit trail is hash-chained and intact', async () => {
+    await page.goto(URL_ + '#/rn/audit'); await page.waitForSelector('text=hash chain verified');
+    await signOut();
+  }],
+  ['5 wrong PINs lock the account', async () => {
+    for (let i = 0; i < 5; i++) { await signIn('Jean-Pierre Baptiste', '0000'); await page.waitForTimeout(200); }
+    await signIn('Jean-Pierre Baptiste', '2222');
+    await page.waitForSelector('#toast:not([hidden])');
+    if (await page.locator('.hello').count()) throw new Error('signed in while locked out');
   }],
   ['no errors along the way', async () => { if (errors.length) throw new Error(errors.join('; ')); }],
 ];

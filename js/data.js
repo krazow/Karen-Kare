@@ -1,4 +1,6 @@
 // MOCK DATA ONLY — fictional people. Never put real PHI here.
+// DEMO shows demo PINs and the reset button on the sign-in screen. Must be false before real patient data.
+export const DEMO = true;
 // Florida SMMC Long-Term Care procedure codes (AHCA waiver code table; plan
 // billing guides list T1019 and S5130 as per-15-minute units, one line per date
 // of service). Confirm units/modifiers against each plan's contract.
@@ -29,7 +31,8 @@ export function seed() {
         { type: 'HHA 40-hr training (F.S. 400.497)', issued: '2023-03-01', expires: null },
         { type: 'Level 2 background screening', issued: day(-1700), expires: day(125) },
         { type: 'CPR / First Aid', issued: day(-700), expires: day(30) },
-        { type: 'HIV/AIDS in-service', issued: day(-300), expires: day(65) },
+        { type: 'Dementia (ADRD) training — F.S. 430.5025', issued: day(-300), expires: null },
+        { type: 'OIG LEIE + AHCA exclusion check (monthly)', issued: day(-20), expires: day(10) },
       ] },
     { id: 'u_aide2', role: 'aide', name: 'Jean-Pierre Baptiste', pin: '2222', employeeId: 'A-1077', lang: 'ht', gender: 'M', licenseNumber: 'CNA-999001', ssnLast5: '00000',
       credentials: [
@@ -37,6 +40,8 @@ export function seed() {
         { type: 'Level 2 background screening', issued: day(-400), expires: day(1425) },
         { type: 'CPR / First Aid', issued: day(-760), expires: day(-30) },
         { type: 'Medication validation (59A-8.0097)', issued: day(-200), expires: day(165) },
+        { type: 'Dementia (ADRD) training — F.S. 430.5025', issued: day(-500), expires: null },
+        { type: 'OIG LEIE + AHCA exclusion check (monthly)', issued: day(-40), expires: day(-10) },
       ] },
     { id: 'u_rn1', role: 'rn', name: 'Karen Whitfield, RN', pin: '9999', employeeId: 'N-0007', credentials: [] },
   ];
