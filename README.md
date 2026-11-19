@@ -5,6 +5,12 @@ PWA today → Capacitor (App Store / Play Store) and Tauri/Electron (Windows ins
 
 > **v0.2 prototype — MOCK DATA ONLY.** Do not enter real patient information until a HIPAA-eligible backend with a signed BAA is in place.
 
+## Releasing
+This repo uses the shared [Krazow release kit](https://github.com/krazow/release-kit). In a Claude chat on this repo, type **`/release now`** (beta), then **`/release promote`** (production). `/release status` and `/release rollback` also work.
+- Web: `https://krazow.github.io/Karen-Kare/` (beta at `/beta/`, with its own separate data)
+- Android APK (`com.krazow.karenkare`) and Windows installer (port 44620) on the GitHub Releases page
+- Pull requests and pushes to `main` run QA (`npm test` + release checks) automatically.
+
 ## Run it
 No build step. Serve the folder over HTTP:
 ```

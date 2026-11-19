@@ -107,4 +107,4 @@ Exact internal tooling isn't always public; this is what's verifiable.
 - EVV export rebuilt to HHAeXchange's published Homecare V5 visit import layout (96 columns, `YYYY-MM-DD HH:MM` local times, call types Mobile/Manual, missed-visit and visit-edit codes). Payer IDs and reason/action codes are entered in Settings once HHAeXchange provides the EDI Code Table Guide.
 - On-device encryption (AES-GCM-256, per-user PIN-wrapped key), PINs no longer stored, background auto-lock.
 - Aide UI in English, Spanish, Haitian Creole.
-- GitHub Pages must be turned on manually (Settings → Pages → Deploy from branch → main / root).
+- Releases go through the shared release kit (`/release now`); GitHub Pages source must be "GitHub Actions".
