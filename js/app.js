@@ -10,6 +10,7 @@ const taskById = Object.fromEntries(TASK_LIBRARY.map(x => [x.id, x]));
 const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const today = () => localDate();
 const svc = code => t(SERVICES[code]?.label || code);
+const APP_VERSION = '0.2.0'; // stamped by the release kit
 const AUTO_LOCK_MS = 5 * 60 * 1000; // HIPAA 164.312(a)(2)(iii) automatic logoff
 const MISSED_REASONS = ['Client not home', 'Client refused service', 'Client hospitalized', 'Caregiver unavailable / call-out', 'Emergency evacuation', 'Other'];
 
@@ -103,7 +104,7 @@ async function viewLogin() {
         <button class="btn primary xl" id="signin">${t('Sign in')}</button>
       </form>
       <p class="demo">Demo PINs — Maria 1111 · Jean-Pierre 2222 · Karen RN 9999<br>
-      <button class="link" id="reset">Reset demo data</button></p>
+      <button class="link" id="reset">Reset demo data</button><br><span class="ver">v${APP_VERSION}</span></p>
     </section>`, { title: 'Karen Kare', langs: true });
   $('#lf').onsubmit = async e => {
     e.preventDefault();
